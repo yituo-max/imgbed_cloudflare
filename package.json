@@ -1,0 +1,29 @@
+{
+  "name": "imgbed-cloudflare",
+  "version": "1.0.0",
+  "description": "CloudFlare图床应用 - 整合CloudFlare-ImgBed后端和runtuimgbed前端",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "start": "wrangler dev",
+    "build": "echo 'No build step required for Cloudflare Workers'",
+    "test": "echo 'No tests specified'",
+    "deploy": "wrangler deploy"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.490.0",
+    "itty-router": "^4.0.0"
+  },
+  "devDependencies": {
+    "wrangler": "^3.0.0"
+  },
+  "keywords": [
+    "cloudflare",
+    "workers",
+    "image-hosting",
+    "r2"
+  ],
+  "author": "",
+  "license": "MIT"
+}

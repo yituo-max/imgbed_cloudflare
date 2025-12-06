@@ -1,4 +1,4 @@
-name = "imgbed-cloudflare"
+name = "imgbed2"
 compatibility_date = "2024-01-01"
 main = "src/index.js"
 compatibility_flags = ["nodejs_compat"]

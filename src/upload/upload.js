@@ -1,18 +1,21 @@
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
 
 // 创建S3客户端（用于Cloudflare R2）
-const s3Client = new S3Client({
-  region: 'auto',
-  endpoint: `https://${process.env.CF_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-  credentials: {
-    accessKeyId: process.env.R2_ACCESS_KEY_ID,
-    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
-  },
-})
+function createS3Client(env) {
+  return new S3Client({
+    region: 'auto',
+    endpoint: `https://${env.CF_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+    credentials: {
+      accessKeyId: env.R2_ACCESS_KEY_ID,
+      secretAccessKey: env.R2_SECRET_ACCESS_KEY,
+    },
+  })
+}
 
 // 上传处理程序
-export default async function uploadHandler(request) {
+export default async function uploadHandler(request, env) {
   try {
+    const s3Client = createS3Client(env)
     const formData = await request.formData()
     const file = formData.get('file')
     
@@ -55,7 +58,7 @@ export default async function uploadHandler(request) {
     // 上传到R2
     const arrayBuffer = await file.arrayBuffer()
     const uploadParams = {
-      Bucket: process.env.R2_BUCKET_NAME,
+      Bucket: env.R2_BUCKET_NAME,
       Key: fileName,
       Body: new Uint8Array(arrayBuffer),
       ContentType: file.type,

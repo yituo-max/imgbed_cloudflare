@@ -10,20 +10,20 @@ import {
 } from './chunked-upload.js'
 
 // 分块上传处理程序
-export default async function chunkedUploadHandler(request) {
+export default async function chunkedUploadHandler(request, env) {
   const url = new URL(request.url)
   const action = url.searchParams.get('action')
 
   try {
     switch (action) {
       case 'init':
-        return await handleInitUpload(request)
+        return await handleInitUpload(request, env)
       case 'upload':
-        return await handleUploadChunk(request)
+        return await handleUploadChunk(request, env)
       case 'complete':
-        return await handleCompleteUpload(request)
+        return await handleCompleteUpload(request, env)
       case 'abort':
-        return await handleAbortUpload(request)
+        return await handleAbortUpload(request, env)
       case 'progress':
         return await handleGetProgress(request)
       default:
@@ -48,7 +48,7 @@ export default async function chunkedUploadHandler(request) {
 }
 
 // 初始化分块上传
-async function handleInitUpload(request) {
+async function handleInitUpload(request, env) {
   const formData = await request.formData()
   const file = formData.get('file')
   
@@ -89,7 +89,7 @@ async function handleInitUpload(request) {
   const fileName = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${fileExtension}`
 
   // 初始化分块上传
-  const result = await initChunkedUpload(fileName, file.type)
+  const result = await initChunkedUpload(fileName, file.type, env)
 
   return new Response(JSON.stringify({
     success: true,
@@ -105,7 +105,7 @@ async function handleInitUpload(request) {
 }
 
 // 上传分块
-async function handleUploadChunk(request) {
+async function handleUploadChunk(request, env) {
   const url = new URL(request.url)
   const uploadId = url.searchParams.get('uploadId')
   const chunkIndex = parseInt(url.searchParams.get('chunkIndex'))
@@ -147,7 +147,7 @@ async function handleUploadChunk(request) {
   }
 
   const arrayBuffer = await chunkData.arrayBuffer()
-  const result = await uploadChunk(uploadId, chunkIndex, new Uint8Array(arrayBuffer))
+  const result = await uploadChunk(uploadId, chunkIndex, new Uint8Array(arrayBuffer), env)
 
   return new Response(JSON.stringify({
     success: true,
@@ -160,7 +160,7 @@ async function handleUploadChunk(request) {
 }
 
 // 完成分块上传
-async function handleCompleteUpload(request) {
+async function handleCompleteUpload(request, env) {
   const url = new URL(request.url)
   const uploadId = url.searchParams.get('uploadId')
 
@@ -174,7 +174,7 @@ async function handleCompleteUpload(request) {
     })
   }
 
-  const result = await completeChunkedUpload(uploadId)
+  const result = await completeChunkedUpload(uploadId, env)
   
   // 构建访问URL
   const fileUrl = `${new URL(request.url).origin}/file/${result.fileName}`
@@ -192,7 +192,7 @@ async function handleCompleteUpload(request) {
 }
 
 // 中止上传
-async function handleAbortUpload(request) {
+async function handleAbortUpload(request, env) {
   const url = new URL(request.url)
   const uploadId = url.searchParams.get('uploadId')
 
@@ -206,7 +206,7 @@ async function handleAbortUpload(request) {
     })
   }
 
-  const result = await abortChunkedUpload(uploadId)
+  const result = await abortChunkedUpload(uploadId, env)
 
   return new Response(JSON.stringify({
     success: true,

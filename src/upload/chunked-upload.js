@@ -1,14 +1,16 @@
 import { S3Client, PutObjectCommand, CreateMultipartUploadCommand, UploadPartCommand, CompleteMultipartUploadCommand, AbortMultipartUploadCommand } from '@aws-sdk/client-s3'
 
 // 创建S3客户端
-const s3Client = new S3Client({
-  region: 'auto',
-  endpoint: `https://${process.env.CF_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-  credentials: {
-    accessKeyId: process.env.R2_ACCESS_KEY_ID,
-    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
-  },
-})
+function createS3Client(env) {
+  return new S3Client({
+    region: 'auto',
+    endpoint: `https://${env.CF_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+    credentials: {
+      accessKeyId: env.R2_ACCESS_KEY_ID,
+      secretAccessKey: env.R2_SECRET_ACCESS_KEY,
+    },
+  })
+}
 
 // 分块大小（5MB）
 const CHUNK_SIZE = 5 * 1024 * 1024
@@ -17,11 +19,12 @@ const CHUNK_SIZE = 5 * 1024 * 1024
 const uploadSessions = new Map()
 
 // 初始化分块上传
-async function initChunkedUpload(fileName, fileType) {
+async function initChunkedUpload(fileName, fileType, env) {
+  const s3Client = createS3Client(env)
   const uploadId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
   
   const createMultipartUploadParams = {
-    Bucket: process.env.R2_BUCKET_NAME,
+    Bucket: env.R2_BUCKET_NAME,
     Key: fileName,
     ContentType: fileType,
     Metadata: {
@@ -54,7 +57,8 @@ async function initChunkedUpload(fileName, fileType) {
 }
 
 // 上传分块
-async function uploadChunk(uploadId, chunkIndex, chunkData) {
+async function uploadChunk(uploadId, chunkIndex, chunkData, env) {
+  const s3Client = createS3Client(env)
   const session = uploadSessions.get(uploadId)
   if (!session) {
     throw new Error('上传会话不存在')
@@ -62,7 +66,7 @@ async function uploadChunk(uploadId, chunkIndex, chunkData) {
 
   try {
     const uploadPartParams = {
-      Bucket: process.env.R2_BUCKET_NAME,
+      Bucket: env.R2_BUCKET_NAME,
       Key: session.fileName,
       PartNumber: chunkIndex + 1,
       UploadId: session.s3UploadId,
@@ -88,7 +92,8 @@ async function uploadChunk(uploadId, chunkIndex, chunkData) {
 }
 
 // 完成分块上传
-async function completeChunkedUpload(uploadId) {
+async function completeChunkedUpload(uploadId, env) {
+  const s3Client = createS3Client(env)
   const session = uploadSessions.get(uploadId)
   if (!session) {
     throw new Error('上传会话不存在')
@@ -96,7 +101,7 @@ async function completeChunkedUpload(uploadId) {
 
   try {
     const completeParams = {
-      Bucket: process.env.R2_BUCKET_NAME,
+      Bucket: env.R2_BUCKET_NAME,
       Key: session.fileName,
       UploadId: session.s3UploadId,
       MultipartUpload: {
@@ -121,7 +126,7 @@ async function completeChunkedUpload(uploadId) {
     // 尝试中止上传
     try {
       await s3Client.send(new AbortMultipartUploadCommand({
-        Bucket: process.env.R2_BUCKET_NAME,
+        Bucket: env.R2_BUCKET_NAME,
         Key: session.fileName,
         UploadId: session.s3UploadId
       }))
@@ -135,7 +140,8 @@ async function completeChunkedUpload(uploadId) {
 }
 
 // 中止分块上传
-async function abortChunkedUpload(uploadId) {
+async function abortChunkedUpload(uploadId, env) {
+  const s3Client = createS3Client(env)
   const session = uploadSessions.get(uploadId)
   if (!session) {
     return { success: true, message: '上传会话不存在或已清理' }
@@ -143,7 +149,7 @@ async function abortChunkedUpload(uploadId) {
 
   try {
     await s3Client.send(new AbortMultipartUploadCommand({
-      Bucket: process.env.R2_BUCKET_NAME,
+      Bucket: env.R2_BUCKET_NAME,
       Key: session.fileName,
       UploadId: session.s3UploadId
     }))

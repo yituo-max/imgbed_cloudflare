@@ -1,17 +1,19 @@
 import { S3Client, GetObjectCommand, HeadObjectCommand } from '@aws-sdk/client-s3'
 
 // 创建S3客户端（用于Cloudflare R2）
-const s3Client = new S3Client({
-  region: 'auto',
-  endpoint: `https://${process.env.CF_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-  credentials: {
-    accessKeyId: process.env.R2_ACCESS_KEY_ID,
-    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
-  },
-})
+function createS3Client(env) {
+  return new S3Client({
+    region: 'auto',
+    endpoint: `https://${env.CF_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+    credentials: {
+      accessKeyId: env.R2_ACCESS_KEY_ID,
+      secretAccessKey: env.R2_SECRET_ACCESS_KEY,
+    },
+  })
+}
 
 // 文件访问处理程序
-export default async function fileHandler(request) {
+export default async function fileHandler(request, env) {
   try {
     const url = new URL(request.url)
     const filename = url.pathname.split('/').pop()
@@ -20,10 +22,13 @@ export default async function fileHandler(request) {
       return new Response('File not found', { status: 404 })
     }
 
+    // 创建S3客户端
+    const s3Client = createS3Client(env)
+
     // 检查文件是否存在
     try {
       const headParams = {
-        Bucket: process.env.R2_BUCKET_NAME,
+        Bucket: env.R2_BUCKET_NAME,
         Key: filename
       }
       await s3Client.send(new HeadObjectCommand(headParams))
@@ -36,7 +41,7 @@ export default async function fileHandler(request) {
 
     // 获取文件
     const getParams = {
-      Bucket: process.env.R2_BUCKET_NAME,
+      Bucket: env.R2_BUCKET_NAME,
       Key: filename
     }
 

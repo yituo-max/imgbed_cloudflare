@@ -10,7 +10,7 @@ bucket_name = "imgbed-bucket"
 
 # 环境变量（需要在Cloudflare Dashboard中设置）
 [vars]
-CF_ACCOUNT_ID = "your-cloudflare-account-id"
-R2_ACCESS_KEY_ID = "your-r2-access-key-id"
-R2_SECRET_ACCESS_KEY = "your-r2-secret-access-key"
+CF_ACCOUNT_ID = "d5d62e3db50b4c8a53117b0afe6a7cbb"
+R2_ACCESS_KEY_ID = "你的R2访问密钥ID"
+R2_SECRET_ACCESS_KEY = "你的R2秘密访问密钥"
 R2_BUCKET_NAME = "imgbed-bucket"

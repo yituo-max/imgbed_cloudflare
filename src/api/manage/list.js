@@ -1,26 +1,31 @@
 import { S3Client, ListObjectsV2Command } from '@aws-sdk/client-s3'
 
 // 创建S3客户端（用于Cloudflare R2）
-const s3Client = new S3Client({
-  region: 'auto',
-  endpoint: `https://${process.env.CF_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-  credentials: {
-    accessKeyId: process.env.R2_ACCESS_KEY_ID,
-    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
-  },
-})
+function createS3Client(env) {
+  return new S3Client({
+    region: 'auto',
+    endpoint: `https://${env.CF_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+    credentials: {
+      accessKeyId: env.R2_ACCESS_KEY_ID,
+      secretAccessKey: env.R2_SECRET_ACCESS_KEY,
+    },
+  })
+}
 
 // 文件列表处理程序
-export default async function listHandler(request) {
+export default async function listHandler(request, env) {
   try {
     const url = new URL(request.url)
     const count = parseInt(url.searchParams.get('count')) || 50
     const search = url.searchParams.get('search') || ''
     const page = parseInt(url.searchParams.get('page')) || 1
     
+    // 创建S3客户端
+    const s3Client = createS3Client(env)
+    
     // 获取R2存储桶中的文件列表
     const listParams = {
-      Bucket: process.env.R2_BUCKET_NAME,
+      Bucket: env.R2_BUCKET_NAME,
       MaxKeys: count
     }
 

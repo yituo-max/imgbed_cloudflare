@@ -17,17 +17,17 @@ router.get('/health', () => new Response('OK'))
 router.post('/api/login', loginHandler)
 
 // 普通上传接口
-router.post('/upload', userAuthCheck, uploadHandler)
+router.post('/upload', userAuthCheck, (request) => uploadHandler(request, request.env))
 
 // 分块上传接口
-router.post('/upload/chunked', userAuthCheck, chunkedUploadHandler)
+router.post('/upload/chunked', userAuthCheck, (request) => chunkedUploadHandler(request, request.env))
 
 // 文件管理接口
-router.get('/api/manage/list', userAuthCheck, listHandler)
-router.delete('/api/manage/delete', userAuthCheck, deleteHandler)
+router.get('/api/manage/list', userAuthCheck, (request) => listHandler(request, request.env))
+router.delete('/api/manage/delete', userAuthCheck, (request) => deleteHandler(request, request.env))
 
 // 文件访问接口
-router.get('/file/:filename', fileHandler)
+router.get('/file/:filename', (request) => fileHandler(request, request.env))
 
 // 404处理
 router.all('*', () => new Response('Not Found', { status: 404 }))

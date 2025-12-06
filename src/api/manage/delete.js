@@ -1,17 +1,19 @@
 import { S3Client, DeleteObjectCommand } from '@aws-sdk/client-s3'
 
 // 创建S3客户端（用于Cloudflare R2）
-const s3Client = new S3Client({
-  region: 'auto',
-  endpoint: `https://${process.env.CF_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-  credentials: {
-    accessKeyId: process.env.R2_ACCESS_KEY_ID,
-    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
-  },
-})
+function createS3Client(env) {
+  return new S3Client({
+    region: 'auto',
+    endpoint: `https://${env.CF_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+    credentials: {
+      accessKeyId: env.R2_ACCESS_KEY_ID,
+      secretAccessKey: env.R2_SECRET_ACCESS_KEY,
+    },
+  })
+}
 
 // 文件删除处理程序
-export default async function deleteHandler(request) {
+export default async function deleteHandler(request, env) {
   try {
     const url = new URL(request.url)
     const fileId = url.searchParams.get('id')
@@ -26,9 +28,12 @@ export default async function deleteHandler(request) {
       })
     }
 
+    // 创建S3客户端
+    const s3Client = createS3Client(env)
+    
     // 删除R2中的文件
     const deleteParams = {
-      Bucket: process.env.R2_BUCKET_NAME,
+      Bucket: env.R2_BUCKET_NAME,
       Key: fileId
     }
 
